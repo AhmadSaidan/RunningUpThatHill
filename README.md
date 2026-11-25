@@ -43,7 +43,9 @@ The baseline (4 layers × 256, 3.4M parameters, 13.4 MB) scores **2.121 bpb** on
 
 ## How to submit
 
-Open a PR that changes only `model.py`, `tokenizer.py` and/or `train.py`, and fill in the one-line change in the PR template.
+[Fork this repo](https://github.com/harrygcoppock/RunningUpThatHill/fork), make your change on a branch of your fork, and open a PR
+back to `main` here. It must change only `model.py`, `tokenizer.py` and/or `train.py`. Fill in the one-line change in the PR template.
+Base your branch on the latest `main`, so your change builds on the current record.
 
 What happens next:
 
