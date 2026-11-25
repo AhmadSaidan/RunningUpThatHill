@@ -59,4 +59,4 @@ What happens next:
 5. **Merge.** If your change beats the current record by at least 0.02 bpb, you explain your diff to the class and Harry merges it.
    It becomes the new record, and everyone builds on it from there.
 
-A run takes about 7 minutes, and runs go one at a time, so there may be a queue.
+A run takes about 7 minutes.
