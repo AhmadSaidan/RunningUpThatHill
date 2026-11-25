@@ -1,4 +1,4 @@
-# GPU-Poor Golf
+# Running up that hill
 
 Train the best language model you can in **5 minutes on one NVIDIA L4**.
 Score: **bits per byte (bpb)** on a held-out test set. Lower is better.
