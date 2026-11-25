@@ -1,0 +1,105 @@
+# Scores a PR on one L4 when the maintainer adds the `score` label, posts the result, and updates the site.
+#
+# Security:
+# - No PR code runs here. The PR's three editable files are copied as data and executed only inside a
+#   network-isolated SageMaker job. eval.py and scoring/ always come from main.
+# - Only a `score` label added by vars.SCORING_APPROVER starts a run; the label is removed afterwards,
+#   so new commits need a fresh approval.
+# - The `scoring` environment (which holds the AWS role) is restricted to protected branches (main).
+# - PR text (title, body, author) reaches scripts only through env variables, never inline ${{ }}.
+name: score
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, closed]
+
+permissions:
+  contents: read
+
+env:
+  PR: ${{ github.event.pull_request.number }}
+  SHA: ${{ github.event.pull_request.head.sha }}
+
+jobs:
+  check: # on every push: rejects PRs that touch protected files (no approval needed)
+    if: contains(fromJSON('["opened", "synchronize", "reopened"]'), github.event.action)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scoring/check_files.sh
+
+  score:
+    if: >-
+      github.event.action == 'labeled' && github.event.label.name == 'score' &&
+      github.event.sender.login == vars.SCORING_APPROVER
+    runs-on: ubuntu-latest
+    environment: scoring
+    timeout-minutes: 180
+    concurrency: score-pr-${{ github.event.pull_request.number }}
+    permissions:
+      contents: write # to update the gh-pages site
+      pull-requests: write
+      id-token: write # for AWS OIDC
+      pages: read # to look up the site URL for the comment
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@v4 # main (trusted)
+
+      - name: Check the PR only touches editable files
+        run: bash scoring/check_files.sh
+
+      - name: Acknowledge
+        run: gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "Scoring \`${SHA::7}\` on an L4. This takes about 7–11 minutes, longer if other runs are queued."
+
+      - name: Copy the submission files (as data, never executed here)
+        run: |
+          git fetch origin "pull/$PR/head"
+          mkdir submission
+          for f in model.py tokenizer.py train.py; do git show "$SHA:$f" > "submission/$f"; done
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-2
+
+      - name: Score on an L4
+        run: bash scoring/submit.sh submission "pr$PR-${SHA::7}" > comment.md
+
+      - name: Publish to the leaderboard site
+        if: always() && hashFiles('result.json') != ''
+        run: |
+          pip install --quiet matplotlib
+          CHANGE=$(python3 -c "import os,re; b=re.sub(r'<!--.*?-->','',os.environ.get('PR_BODY') or '',flags=re.S); m=re.search(r'^One change:(.*)$',b,re.M); print((m.group(1).strip() if m else '')[:120])")
+          bash scoring/update_site.sh add result.json --pr "$PR" --sha "$SHA" --author "$AUTHOR" --title "$PR_TITLE" --change "$CHANGE"
+          SITE=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url)
+          JOB=$(python3 -c "import json; print(json.load(open('result.json'))['job'])")
+          printf '\n![training curve](%splots/%s.png)\n\n[Leaderboard](%s)\n' "$SITE" "$JOB" "$SITE" >> comment.md
+
+      - name: Post the result to the PR
+        if: always()
+        run: |
+          [ -s comment.md ] || echo "Scoring failed before a result was produced; see the Actions log." > comment.md
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file comment.md
+
+      - name: Remove the label (new commits need a fresh approval)
+        if: always()
+        run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label score || true
+
+  merged: # marks the run as a record on the site when the maintainer merges the PR
+    if: github.event.action == 'closed' && github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scoring/update_site.sh merged --pr "$PR" --sha "$SHA"
