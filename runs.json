@@ -1,0 +1,157 @@
+[
+ {
+  "job": "baseline",
+  "pr": null,
+  "sha": "",
+  "author": "harrygcoppock",
+  "title": "Baseline",
+  "change": "vanilla GPT, 4 layers \u00d7 256, fp32, AdamW at a constant LR, byte tokenizer",
+  "label": "dumb",
+  "date": "2026-11-25T12:10:35Z",
+  "merged": true,
+  "bpb": 2.1205,
+  "size": 13445659,
+  "params": 3356672,
+  "steps": 3431,
+  "tokens": 56213504,
+  "curve": [
+   [
+    9,
+    3.8872
+   ],
+   [
+    17,
+    3.646
+   ],
+   [
+    25,
+    3.5046
+   ],
+   [
+    34,
+    3.3176
+   ],
+   [
+    42,
+    3.065
+   ],
+   [
+    51,
+    2.8792
+   ],
+   [
+    60,
+    2.7884
+   ],
+   [
+    68,
+    2.6243
+   ],
+   [
+    77,
+    2.5837
+   ],
+   [
+    85,
+    2.5019
+   ],
+   [
+    94,
+    2.4071
+   ],
+   [
+    102,
+    2.394
+   ],
+   [
+    111,
+    2.3592
+   ],
+   [
+    120,
+    2.4017
+   ],
+   [
+    129,
+    2.3141
+   ],
+   [
+    137,
+    2.2415
+   ],
+   [
+    146,
+    2.259
+   ],
+   [
+    155,
+    2.1275
+   ],
+   [
+    163,
+    2.2066
+   ],
+   [
+    172,
+    2.2241
+   ],
+   [
+    181,
+    2.1498
+   ],
+   [
+    190,
+    2.2131
+   ],
+   [
+    199,
+    2.1998
+   ],
+   [
+    208,
+    2.1528
+   ],
+   [
+    217,
+    2.1359
+   ],
+   [
+    226,
+    2.1548
+   ],
+   [
+    234,
+    2.1205
+   ],
+   [
+    243,
+    2.0967
+   ],
+   [
+    252,
+    2.1387
+   ],
+   [
+    261,
+    2.1072
+   ],
+   [
+    270,
+    2.0713
+   ],
+   [
+    279,
+    2.0544
+   ],
+   [
+    288,
+    2.0202
+   ],
+   [
+    297,
+    2.032
+   ]
+  ],
+  "sample": "Deep Learning is all about the second silence of which is from the Society of Sorry for the U.S. Around, 199. This is the part of African Article things of Reiding Foam with the age and consider to go the order of the part of the best on the style of Website Quality sail for his work.\nThe part, have also fun the page of pred"
+ }
+]

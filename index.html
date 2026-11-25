@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running Up That Hill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --night: #140b29; --night-2: #1f1240; --panel: #241549; --panel-edge: #4b2c86;
+    --ink: #f3e9ff; --muted: #b9a6dd; --moon: #f6e7c1;
+    --magenta: #ff4fa3; --violet: #9b5cff; --gold: #ffcc4d; --hill: #2f8f5b; --hill-dark: #1c5a3a;
+    --red: #ff6b6b; --grey: #6f5f94;
+    --px: 4px;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--night); }
+  body { margin: 0; color: var(--ink); font: 21px/1.25 "VT323", ui-monospace, monospace;
+         background: linear-gradient(180deg, var(--night) 0%, var(--night-2) 60%, var(--night) 100%); }
+  main { max-width: 1080px; margin: 0 auto; padding: 0 16px 64px; }
+  a { color: var(--gold); }
+  h1, h2, .pixel { font-family: "Press Start 2P", monospace; letter-spacing: 0; }
+
+  /* hero scene */
+  .scene { position: relative; margin: 0 -16px; }
+  .scene svg { display: block; width: 100%; height: auto; image-rendering: pixelated; shape-rendering: crispEdges; }
+  .title { position: absolute; left: 0; right: 0; top: 7%; text-align: center; pointer-events: none; padding: 0 16px; }
+  .title h1 { margin: 0; font-size: clamp(16px, 4.2vw, 40px); color: var(--moon);
+              text-shadow: 4px 4px 0 var(--magenta), 8px 8px 0 rgba(0,0,0,.35); }
+  .title .tag { margin-top: 14px; font-size: clamp(16px, 2.2vw, 24px); color: var(--muted); }
+  .twinkle { animation: twinkle 2.4s steps(2) infinite; }
+  .twinkle.b { animation-delay: .8s; } .twinkle.c { animation-delay: 1.6s; }
+  @keyframes twinkle { 50% { opacity: .2; } }
+  .frame-a { animation: frameA .36s steps(1) infinite; }
+  .frame-b { animation: frameB .36s steps(1) infinite; }
+  @keyframes frameA { 0% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes frameB { 0% { opacity: 0; } 50% { opacity: 1; } }
+  .bob { animation: bob .3s steps(1) infinite; }
+  @keyframes bob { 50% { transform: translateY(-1px); } }
+  @media (prefers-reduced-motion: reduce) { .twinkle, .frame-a, .frame-b, .bob { animation: none; } .frame-b { opacity: 0; } }
+
+  /* pixel panels */
+  .box { background: var(--panel); position: relative; margin: 0 var(--px) 28px;
+         box-shadow: 0 calc(-1 * var(--px)) 0 0 var(--panel-edge), 0 var(--px) 0 0 var(--panel-edge),
+                     calc(-1 * var(--px)) 0 0 0 var(--panel-edge), var(--px) 0 0 0 var(--panel-edge),
+                     var(--px) var(--px) 0 var(--px) rgba(0,0,0,.35); padding: 18px 20px; }
+  .box h2 { font-size: 15px; margin: 2px 0 4px; color: var(--magenta); line-height: 1.5; }
+  .box .sub { color: var(--muted); margin: 0 0 14px; }
+  .intro { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin-top: 8px; }
+  .intro p { margin: 0 0 8px; }
+  .rules { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .chip { font-family: "Press Start 2P", monospace; font-size: 10px; padding: 8px 10px; background: var(--night);
+          color: var(--gold); box-shadow: 0 0 0 2px var(--panel-edge); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 20px; margin: 0 var(--px) 28px; }
+  .stat { margin: 0; padding: 14px 16px; }
+  .stat .k { color: var(--muted); }
+  .stat .v { font-family: "Press Start 2P", monospace; font-size: 20px; margin-top: 8px; color: var(--moon); }
+  .chart { position: relative; height: 340px; }
+  .controls { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); margin-bottom: 8px; }
+  .controls input { accent-color: var(--magenta); width: 16px; height: 16px; vertical-align: -2px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; white-space: nowrap; border-bottom: 2px dashed var(--panel-edge); }
+  th { color: var(--muted); font-weight: normal; }
+  td.change { white-space: normal; min-width: 240px; }
+  tr.attempt { cursor: pointer; }
+  tr.attempt:hover, tr.selected { background: rgba(255, 79, 163, .12); }
+  .who { display: inline-flex; align-items: center; gap: 8px; }
+  .who img { width: 24px; height: 24px; image-rendering: pixelated; box-shadow: 0 0 0 2px var(--panel-edge); }
+  .score { font-family: "Press Start 2P", monospace; font-size: 12px; color: var(--moon); }
+  .gain { color: #7dffb0; } .loss { color: var(--muted); }
+  .badge { font-family: "Press Start 2P", monospace; font-size: 9px; padding: 5px 7px; display: inline-block; }
+  .badge.record { background: var(--gold); color: var(--night); }
+  .badge.failed { background: var(--red); color: var(--night); }
+  .badge.dumb { background: var(--violet); color: var(--ink); }
+  .empty { color: var(--muted); padding: 24px 0; text-align: center; }
+  footer { color: var(--muted); text-align: center; font-size: 18px; margin-top: 8px; }
+  @media (max-width: 640px) { .intro { grid-template-columns: 1fr; } }
+  .actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  button.chip { cursor: pointer; border: 0; }
+  button.chip.on { background: var(--magenta); color: var(--night); }
+  .chip.small { font-size: 8px; text-align: center; text-decoration: none; }
+  .rollout { white-space: pre-wrap; word-break: break-word; margin: 0; font: inherit; }
+  .rollout b { color: var(--gold); font-weight: normal; }
+  #player { position: fixed; right: 16px; bottom: 16px; z-index: 20; width: min(360px, calc(100vw - 32px)); aspect-ratio: 16 / 9;
+            background: var(--night); box-shadow: 0 0 0 4px var(--magenta), 8px 8px 0 4px rgba(0,0,0,.45); }
+  #player iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #player .close { position: absolute; top: -34px; right: -4px; font-size: 9px; }
+  #tip { position: fixed; z-index: 10; max-width: min(460px, calc(100vw - 32px)); pointer-events: none; display: none;
+         background: var(--night); padding: 12px 14px; box-shadow: 0 0 0 3px var(--magenta), 6px 6px 0 3px rgba(0,0,0,.4); }
+  #tip .head { color: var(--muted); margin-bottom: 6px; }
+  .dreams { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .dream { background: var(--night); padding: 12px 14px; box-shadow: 0 0 0 2px var(--panel-edge); }
+  .dream.record { box-shadow: 0 0 0 2px var(--gold); }
+  .dream .head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="scene">
+  <svg id="scene" viewBox="0 0 320 120" role="img" aria-label="A pixel-art night: a runner climbs a hill under the moon, chased by hounds"></svg>
+  <div class="title">
+    <h1>Running Up That Hill</h1>
+    <div class="tag">5 minutes · 1 GPU · lowest bits per byte wins</div>
+  </div>
+</div>
+
+<main>
+  <section class="box intro">
+    <div>
+      <p>The tutorial challenge for <a href="https://hcoppockno10.github.io/lecture-notes/">Deep Learning for the GPU Poor</a>.
+         Start from a deliberately dumb language model and make it better, one change at a time:
+         every PR is retrained from scratch for 5 minutes on an NVIDIA L4 and scored on a held-out test set.
+         Each new record moves the runner further up the hill.</p>
+      <div class="rules">
+        <span class="chip">5 MIN</span><span class="chip">1 × L4</span><span class="chip">≤ 16 MB</span>
+        <span class="chip">BPB ↓</span><span class="chip">1 CHANGE / PR</span><span class="chip">+0.02 FOR A RECORD</span>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="chip" id="repo-link" href="#">OPEN A PR &gt;</a>
+      <button class="chip" id="music" type="button" aria-pressed="false">MUSIC: OFF</button>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="box stat"><div class="k">Current record</div><div class="v" id="s-record">–</div></div>
+    <div class="box stat"><div class="k">Up the hill from baseline</div><div class="v" id="s-gain">–</div></div>
+    <div class="box stat"><div class="k">Records</div><div class="v" id="s-records">–</div></div>
+    <div class="box stat"><div class="k">Hounds in the pack</div><div class="v" id="s-attempts">–</div></div>
+  </div>
+
+  <section class="box">
+    <h2>Running Up That Hill</h2>
+    <p class="sub">Every record is a step up the hill. Dots are attempts that didn't make it.</p>
+    <div class="chart"><canvas id="history"></canvas></div>
+  </section>
+
+  <section class="box">
+    <h2>Cloudbusting</h2>
+    <p class="sub">Training loss for every run, in bits per byte against wall-clock seconds. Records in colour.</p>
+    <div class="controls">
+      <label><input type="checkbox" id="show-all" checked> show the whole pack</label>
+      <span>Click a row below to light up its curve.</span>
+    </div>
+    <div class="chart"><canvas id="curves"></canvas></div>
+  </section>
+
+  <section class="box">
+    <h2>Hounds of Love</h2>
+    <p class="sub">Every attempt, in the order it was scored.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>PR</th><th>bpb</th><th>Δ record</th><th>Who</th><th>The change</th><th>Size</th><th>When</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <section class="box">
+    <h2>And Dream of Sheep</h2>
+    <p class="sub">What each model dreams up when asked to continue <b style="color:var(--gold);font-weight:normal">"Deep Learning is all about"</b>. Temperature 0.8, same seed for everyone. Hover a row in the table to see them too.</p>
+    <div class="dreams" id="dreams"></div>
+  </section>
+
+  <footer>Pixel art drawn for this page, with love for Kate Bush. Music plays the official video from YouTube. Not affiliated.</footer>
+</main>
+
+<div id="tip"></div>
+<div id="player" hidden></div>
+
+<script>
+const REPO = "harrygcoppock/RunningUpThatHill";  // filled in by scoring/update_site.sh
+const SUMMIT = 1.70;       // bpb at which the runner reaches the top of the hill
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const handle = s => String(s ?? "").replace(/[^A-Za-z0-9-]/g, "");
+const PROMPT = "Deep Learning is all about";
+const rollout = r => r.sample?.startsWith(PROMPT) ? `<b>${esc(PROMPT)}</b>${esc(r.sample.slice(PROMPT.length))}` : esc(r.sample);
+const label = r => r.pr ? `#${r.pr} @${r.author}: ${r.change}` : `baseline: ${r.change}`;
+document.getElementById("repo-link").href = `https://github.com/${REPO}`;
+
+/* ---------- pixel scene ---------- */
+const SPRITES = {
+  runA: ["..HHH...", ".HHSS...", ".HHSS...", "..RRR...", ".RRRRR..", "S.RRR.S.", "..RRR...", "..R.R...", ".R...R..", "R.....R."],
+  runB: ["..HHH...", ".HHSS...", ".HHSS...", "..RRR...", "..RRRR..", "..RRRS..", ".SRRR...", "..RR....", "..RR....", "..R.R..."],
+  houndA: ["........DD.", "D......DDDE", ".DDDDDDDDD.", "..DDDDDDD..", "..D..D.D...", ".D..D...D.."],
+  houndB: ["........DD.", ".D.....DDDE", ".DDDDDDDDD.", "..DDDDDDD..", "...D.D..D..", "...D.D...D."],
+};
+const PALETTE = () => ({ H: "#b3263e", S: "#f6c9a0", R: css("--magenta"), D: "#0d0720", E: css("--gold") });
+
+function sprite(rows, x, y, cls) {
+  const pal = PALETTE();
+  let out = `<g class="${cls || ""}">`;
+  rows.forEach((row, j) => [...row].forEach((c, i) => {
+    if (c !== ".") out += `<rect x="${x + i}" y="${y + j}" width="1" height="1" fill="${pal[c]}"/>`;
+  }));
+  return out + "</g>";
+}
+
+const hillTop = x => Math.round(104 - 62 * Math.pow(Math.max(0, Math.min(1, (x - 20) / 260)), 1.15));
+
+function drawScene(progress, hounds) {
+  let s = "";
+  // sky bands
+  ["#140b29", "#1a0f36", "#221445", "#2b1853", "#351c60"].forEach((c, i) => s += `<rect x="0" y="${i * 14}" width="320" height="${i === 4 ? 120 : 14}" fill="${c}"/>`);
+  // stars (deterministic)
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 70; i++) {
+    const x = Math.floor(rnd() * 320), y = Math.floor(rnd() * 70), cls = ["twinkle", "twinkle b", "twinkle c", ""][i % 4];
+    s += `<rect class="${cls}" x="${x}" y="${y}" width="1" height="1" fill="${i % 9 ? "#d9ccff" : css("--gold")}"/>`;
+  }
+  // moon (pixel disc) with a magenta halo
+  for (let y = -13; y <= 13; y++) for (let x = -13; x <= 13; x++) {
+    const d = x * x + y * y;
+    if (d <= 100) s += `<rect x="${262 + x}" y="${24 + y}" width="1" height="1" fill="${d > 64 ? "#ead7a8" : css("--moon")}"/>`;
+    else if (d <= 169 && (x + y) % 2 === 0) s += `<rect x="${262 + x}" y="${24 + y}" width="1" height="1" fill="${css("--magenta")}" opacity=".35"/>`;
+  }
+  // far hills
+  for (let x = 0; x < 320; x += 2) {
+    const h = Math.round(92 + 6 * Math.sin(x / 23) + 4 * Math.sin(x / 9));
+    s += `<rect x="${x}" y="${h}" width="2" height="${120 - h}" fill="#2a1f5a"/>`;
+  }
+  // the hill
+  for (let x = 0; x < 320; x += 2) {
+    const top = hillTop(x);
+    s += `<rect x="${x}" y="${top}" width="2" height="${120 - top}" fill="${css("--hill-dark")}"/>`;
+    s += `<rect x="${x}" y="${top}" width="2" height="2" fill="${css("--hill")}"/>`;
+  }
+  // flag at the summit
+  s += `<rect x="281" y="${hillTop(281) - 14}" width="1" height="14" fill="#d9ccff"/>`;
+  s += `<rect x="282" y="${hillTop(281) - 14}" width="7" height="5" fill="${css("--gold")}"/>`;
+  // runner
+  const rx = Math.round(24 + progress * 248), ry = hillTop(rx + 4) - 10;
+  s += sprite(SPRITES.runA, rx, ry, "frame-a") + sprite(SPRITES.runB, rx, ry, "frame-b");
+  // the hounds, one per non-record attempt (up to 6), chasing from behind
+  for (let i = 0; i < Math.min(hounds, 6); i++) {
+    const hx = rx - 16 - i * 14;
+    if (hx < -10) break;
+    const hy = hillTop(hx + 5) - 6;
+    s += `<g class="bob" style="animation-delay:${i * 0.07}s">` + sprite(SPRITES.houndA, hx, hy, "frame-a") + sprite(SPRITES.houndB, hx, hy, "frame-b") + "</g>";
+  }
+  document.getElementById("scene").innerHTML = s;
+}
+
+/* ---------- data ---------- */
+let runs = [], selected = null, curvesChart, historyChart;
+fetch("runs.json", {cache: "no-store"}).then(r => r.ok ? r.json() : []).catch(() => []).then(data => {
+  runs = data;
+  let best = Infinity;
+  for (const r of runs) {  // a record is a merged run that beat every earlier merged run
+    r.isRecord = r.merged && r.bpb != null && r.bpb < best;
+    r.prevBest = best;
+    if (r.isRecord) best = r.bpb;
+  }
+  render();
+});
+
+function render() {
+  const records = runs.filter(r => r.isRecord), scored = runs.filter(r => r.bpb != null);
+  const first = records[0], last = records.at(-1);
+  document.getElementById("s-record").textContent = last ? last.bpb.toFixed(3) : "–";
+  document.getElementById("s-gain").textContent = last && first && last !== first ? `−${(first.bpb - last.bpb).toFixed(3)}` : "0.000";
+  document.getElementById("s-records").textContent = records.length;
+  document.getElementById("s-attempts").textContent = runs.filter(r => r.pr).length;
+  const progress = first && last ? Math.max(0, Math.min(1, (first.bpb - last.bpb) / (first.bpb - SUMMIT))) : 0;
+  drawScene(progress, runs.filter(r => r.pr && !r.isRecord).length);
+  renderTable(); renderHistory(scored, records); renderCurves(); renderDreams();
+}
+
+function renderTable() {
+  const tbody = document.getElementById("rows");
+  if (!runs.length) { tbody.innerHTML = `<tr><td colspan="8" class="empty">The hill is empty. Be the first hound.</td></tr>`; return; }
+  tbody.innerHTML = runs.map((r, i) => {
+    const delta = r.bpb == null || !isFinite(r.prevBest) ? "" : (r.bpb - r.prevBest).toFixed(3);
+    const badges = [r.label ? `<span class="badge dumb">${esc(r.label)}</span>` : "",
+                    r.bpb == null ? `<span class="badge failed">failed</span>` : r.isRecord ? `<span class="badge record">record</span>` : ""].join(" ");
+    const who = handle(r.author);
+    const pr = r.pr ? `<a href="https://github.com/${REPO}/pull/${Number(r.pr)}" target="_blank" rel="noopener">#${Number(r.pr)}</a>` : "–";
+    return `<tr class="attempt${selected === i ? " selected" : ""}" data-i="${i}">
+      <td>${pr}</td>
+      <td class="score">${r.bpb == null ? "–" : r.bpb.toFixed(3)}</td>
+      <td class="${delta.startsWith("-") ? "gain" : "loss"}">${delta}</td>
+      <td><span class="who"><img src="https://github.com/${who}.png?size=16" alt="">@${esc(who)}</span></td>
+      <td class="change">${esc(r.change)}</td>
+      <td>${r.size ? (r.size / 1e6).toFixed(1) + " MB" : "–"}</td>
+      <td>${esc(new Date(r.date).toLocaleString([], {weekday: "short", hour: "2-digit", minute: "2-digit"}))}</td>
+      <td>${badges}</td></tr>`;
+  }).join("");
+  const tip = document.getElementById("tip");
+  tbody.querySelectorAll("tr.attempt").forEach(tr => {
+    const r = runs[Number(tr.dataset.i)];
+    if (!r.sample) return;
+    tr.addEventListener("mouseenter", () => {
+      tip.innerHTML = `<div class="head">${r.pr ? "#" + Number(r.pr) : "baseline"} · ${r.bpb?.toFixed(3) ?? "–"} bpb</div><pre class="rollout">${rollout(r)}</pre>`;
+      tip.style.display = "block";
+    });
+    tr.addEventListener("mousemove", e => {
+      const w = tip.offsetWidth, h = tip.offsetHeight;
+      tip.style.left = Math.max(16, Math.min(e.clientX + 18, innerWidth - w - 16)) + "px";
+      tip.style.top = (e.clientY + 18 + h > innerHeight ? e.clientY - h - 18 : e.clientY + 18) + "px";
+    });
+    tr.addEventListener("mouseleave", () => tip.style.display = "none");
+  });
+  tbody.querySelectorAll("tr.attempt").forEach(tr => tr.addEventListener("click", () => {
+    const i = Number(tr.dataset.i);
+    selected = selected === i ? null : i;
+    renderTable(); renderCurves();
+  }));
+}
+
+Chart.defaults.font.family = "'VT323', monospace";
+Chart.defaults.font.size = 17;
+
+function chartOptions(xTitle, yTitle, plugins = {}) {
+  const grid = { color: "rgba(155, 92, 255, .18)" }, ticks = { color: css("--muted") };
+  return {
+    maintainAspectRatio: false, animation: false, interaction: { mode: "nearest", intersect: false },
+    scales: { x: { type: "linear", title: { display: true, text: xTitle, color: css("--muted") }, grid, ticks },
+              y: { title: { display: true, text: yTitle, color: css("--muted") }, grid, ticks } },
+    plugins: { legend: { labels: { color: css("--ink"), usePointStyle: true, pointStyle: "rect" } },
+               tooltip: { backgroundColor: css("--night"), borderColor: css("--panel-edge"), borderWidth: 2, cornerRadius: 0 },
+               ...plugins },
+  };
+}
+
+function renderHistory(scored, records) {
+  historyChart?.destroy();
+  const idx = r => runs.indexOf(r) + 1;
+  historyChart = new Chart(document.getElementById("history"), {
+    data: { datasets: [
+      { type: "line", label: "Record", data: records.map(r => ({x: idx(r), y: r.bpb, r})), stepped: "before",
+        borderColor: css("--gold"), backgroundColor: css("--gold"), borderWidth: 3, pointStyle: "rect", pointRadius: 6 },
+      { type: "scatter", label: "Attempt", data: scored.filter(r => !r.isRecord).map(r => ({x: idx(r), y: r.bpb, r})),
+        backgroundColor: css("--violet"), pointStyle: "rect", pointRadius: 5 },
+    ]},
+    options: chartOptions("attempt", "val bpb", {
+      tooltip: { backgroundColor: css("--night"), borderColor: css("--panel-edge"), borderWidth: 2, cornerRadius: 0,
+                 callbacks: { label: c => `${label(c.raw.r)} (${c.raw.y.toFixed(3)})` } } }),
+  });
+  historyChart.options.scales.x.ticks.precision = 0;
+  historyChart.update();
+}
+
+function renderCurves() {
+  curvesChart?.destroy();
+  const showAll = document.getElementById("show-all").checked;
+  const palette = [css("--gold"), css("--magenta"), "#5ee6ff", "#7dffb0", "#ff9e4f", css("--violet"), "#f6e7c1"];
+  let k = 0;
+  const datasets = runs.map((r, i) => {
+    if (!r.curve?.length || !(showAll || r.isRecord || selected === i)) return null;
+    const strong = r.isRecord || selected === i;
+    const color = selected === i ? "#ffffff" : r.isRecord ? palette[k++ % palette.length] : css("--grey");
+    return { label: label(r), data: r.curve.map(([x, y]) => ({x, y})), borderColor: color, backgroundColor: color,
+             borderWidth: strong ? 3 : 1.5, pointRadius: 0, order: strong ? 0 : 1, showInLegend: strong };
+  }).filter(Boolean);
+  curvesChart = new Chart(document.getElementById("curves"), {
+    type: "line", data: { datasets },
+    options: chartOptions("training time (s)", "train loss (bits per byte)", {
+      legend: { labels: { color: css("--ink"), usePointStyle: true, pointStyle: "rect",
+                          filter: item => datasets[item.datasetIndex].showInLegend } } }),
+  });
+}
+
+function renderDreams() {
+  const withSample = runs.filter(r => r.sample).reverse();  // newest first
+  document.getElementById("dreams").innerHTML = withSample.length ? withSample.map(r => `
+    <div class="dream${r.isRecord ? " record" : ""}">
+      <div class="head"><span>${r.pr ? "#" + Number(r.pr) + " @" + esc(handle(r.author)) : "baseline" + (r.label ? " (" + esc(r.label) + ")" : "")}</span>
+        <span class="score">${r.bpb?.toFixed(3) ?? "–"}</span></div>
+      <pre class="rollout">${rollout(r)}</pre>
+    </div>`).join("") : `<div class="empty">No dreams yet.</div>`;
+}
+
+/* ---------- music: the official video, loaded only when asked for ---------- */
+const VIDEO = "wp43OdtAAkM";  // Kate Bush - Running Up That Hill (official, KateBushMusic channel)
+function toggleMusic() {
+  const box = document.getElementById("player"), btn = document.getElementById("music"), on = !box.childElementCount;
+  box.innerHTML = on ? `<button class="chip close" type="button" aria-label="Close the music player">X CLOSE</button><iframe src="https://www.youtube-nocookie.com/embed/${VIDEO}?autoplay=1&rel=0" title="Kate Bush - Running Up That Hill (official video)"
+      allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>` : "";
+  box.hidden = !on;
+  btn.textContent = on ? "MUSIC: ON" : "MUSIC: OFF";
+  btn.classList.toggle("on", on);
+  btn.setAttribute("aria-pressed", on);
+  box.querySelector(".close")?.addEventListener("click", toggleMusic);
+}
+document.getElementById("music").addEventListener("click", toggleMusic);
+
+document.getElementById("show-all").addEventListener("change", renderCurves);
+drawScene(0, 0);
+</script>
+</body>
+</html>
