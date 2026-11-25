@@ -71,6 +71,8 @@ jobs:
           aws-region: eu-west-2
 
       - name: Score on an L4
+        env:
+          KEEP_ALIVE: ${{ vars.KEEP_ALIVE_SECONDS || 0 }} # keep the L4 warm between runs (1800 during the tutorial)
         run: bash scoring/submit.sh submission "pr$PR-${SHA::7}" > comment.md
 
       - name: Publish to the leaderboard site

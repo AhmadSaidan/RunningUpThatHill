@@ -25,7 +25,7 @@ until err=$(aws sagemaker create-training-job --training-job-name "$JOB" \
     --algorithm-specification "{\"TrainingImage\":\"$IMAGE\",\"TrainingInputMode\":\"File\",\"ContainerEntrypoint\":[\"bash\",\"/opt/ml/input/data/referee/sandbox.sh\",\"$MAX_BYTES\"]}" \
     --input-data-config "$CHANNELS" \
     --output-data-config "{\"S3OutputPath\":\"s3://$BUCKET/output/\"}" \
-    --resource-config '{"InstanceType":"ml.g6.xlarge","InstanceCount":1,"VolumeSizeInGB":30,"KeepAlivePeriodInSeconds":1800}' \
+    --resource-config "{\"InstanceType\":\"ml.g6.xlarge\",\"InstanceCount\":1,\"VolumeSizeInGB\":30,\"KeepAlivePeriodInSeconds\":${KEEP_ALIVE:-0}}" \
     --stopping-condition '{"MaxRuntimeInSeconds":2400}' \
     --enable-network-isolation 2>&1 >/dev/null); do
     case "$err" in
