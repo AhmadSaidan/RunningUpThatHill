@@ -153,5 +153,163 @@
    ]
   ],
   "sample": "Deep Learning is all about the second silence of which is from the Society of Sorry for the U.S. Around, 199. This is the part of African Article things of Reiding Foam with the age and consider to go the order of the part of the best on the style of Website Quality sail for his work.\nThe part, have also fun the page of pred"
+ },
+ {
+  "job": "golf-pr1-48353b6-1126-194528",
+  "pr": 1,
+  "sha": "48353b6",
+  "author": "hcoppockno10",
+  "title": "[CI test] Halve learning rate",
+  "change": "learning rate 6e-4 -> 3e-4",
+  "date": "2026-11-26T19:59:48+00:00",
+  "merged": false,
+  "bpb": 2.25,
+  "size": 13445659,
+  "params": 3356672,
+  "steps": 3508,
+  "tokens": 57475072,
+  "sample": "Deep Learning is all about the second films and one perious growing to love this love of the toastem craises. This is that power comming the subsequent down the test and stations of a sick since of good to see one of the change of based free style area based to some said for his windows feed that every we need to taking pred",
+  "curve": [
+   [
+    8,
+    3.9673
+   ],
+   [
+    17,
+    3.6966
+   ],
+   [
+    25,
+    3.6624
+   ],
+   [
+    34,
+    3.658
+   ],
+   [
+    42,
+    3.5133
+   ],
+   [
+    50,
+    3.3336
+   ],
+   [
+    59,
+    3.2315
+   ],
+   [
+    67,
+    3.0324
+   ],
+   [
+    76,
+    2.9737
+   ],
+   [
+    84,
+    2.8826
+   ],
+   [
+    93,
+    2.7812
+   ],
+   [
+    101,
+    2.7189
+   ],
+   [
+    110,
+    2.6762
+   ],
+   [
+    118,
+    2.7023
+   ],
+   [
+    127,
+    2.5863
+   ],
+   [
+    135,
+    2.4868
+   ],
+   [
+    144,
+    2.492
+   ],
+   [
+    152,
+    2.3607
+   ],
+   [
+    161,
+    2.4151
+   ],
+   [
+    170,
+    2.4246
+   ],
+   [
+    178,
+    2.3509
+   ],
+   [
+    187,
+    2.3953
+   ],
+   [
+    195,
+    2.3761
+   ],
+   [
+    204,
+    2.3261
+   ],
+   [
+    213,
+    2.2883
+   ],
+   [
+    221,
+    2.317
+   ],
+   [
+    230,
+    2.2672
+   ],
+   [
+    239,
+    2.2526
+   ],
+   [
+    247,
+    2.2861
+   ],
+   [
+    256,
+    2.2437
+   ],
+   [
+    265,
+    2.2063
+   ],
+   [
+    273,
+    2.1906
+   ],
+   [
+    282,
+    2.1469
+   ],
+   [
+    291,
+    2.156
+   ],
+   [
+    299,
+    2.1578
+   ]
+  ]
  }
 ]
