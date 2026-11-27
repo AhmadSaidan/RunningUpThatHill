@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from model import GPT, GPTConfig, save_model
+from model import GPT, GPTConfig, build_ngram_tables, save_model
 from tokenizer import BPETokenizer
 
 # ---- config (override any of these from the command line with key=value) ----
@@ -83,8 +83,13 @@ with open("data/train.txt", "rb") as f:
     raw = f.read()
 tok = BPETokenizer.train(raw, vocab_size=vocab_size)
 tok.save(out_dir)
-data = tok.encode(raw)
+full_data = tok.encode(raw)
 del raw
+# Disjoint split: index second half so training hints are IID with held-out validation text.
+split = len(full_data) // 2
+data = full_data[:split]
+tables = build_ngram_tables(full_data[split:])
+del full_data
 
 
 def get_batch():
@@ -96,6 +101,8 @@ def get_batch():
 
 
 model = GPT(GPTConfig(tok.vocab_size, block_size, n_layer, n_head, n_embd)).to(device)
+model.load_ngram_tables(tables)
+del tables
 print(f"{sum(p.numel() for p in model.parameters()):,} parameters on {device}")
 muon_params = [p for n, p in model.named_parameters() if n.startswith("blocks.") and p.ndim == 2]
 adam_params = [p for n, p in model.named_parameters() if not (n.startswith("blocks.") and p.ndim == 2)]
