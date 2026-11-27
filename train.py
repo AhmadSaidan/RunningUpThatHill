@@ -49,12 +49,14 @@ def get_batch():
 model = GPT(GPTConfig(tok.vocab_size, block_size, n_layer, n_head, n_embd)).to(device)
 print(f"{sum(p.numel() for p in model.parameters()):,} parameters on {device}")
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+use_bf16 = device in ("cuda", "mps")
 
 step, t0 = 0, time.time()
 while time.time() - t0 < time_budget:
     x, y = get_batch()
-    logits = model(x)
-    loss = F.cross_entropy(logits.flatten(0, 1), y.flatten())
+    with torch.autocast(device_type=device, dtype=torch.bfloat16, enabled=use_bf16):
+        logits = model(x)
+        loss = F.cross_entropy(logits.flatten(0, 1), y.flatten())
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
