@@ -25,7 +25,7 @@ for c in train val; do aws s3 cp --quiet --recursive "s3://$BUCKET/data/$c/" "$D
 
 REGISTRY=${IMAGE%%/*}  # 763104351884.dkr.ecr.<region>.amazonaws.com
 aws ecr get-login-password --region "$(echo "$REGISTRY" | cut -d. -f4)" | docker login --username AWS --password-stdin "$REGISTRY"
-docker pull --quiet "$IMAGE"
+docker pull --quiet "$IMAGE" || { echo "golf: could not pull the scoring image"; df -h /; exit 1; }
 echo "golf: image ready at $(date -u +%T)"
 
 docker run --rm --gpus all --network none --shm-size 8g \

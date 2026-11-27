@@ -48,6 +48,7 @@ ec2() {  # prints "<region> <instance id>" if an L4 started anywhere; EC2 proble
             if out=$(aws ec2 run-instances --region "$region" --subnet-id "$subnet" --image-id "$ami" \
                 --instance-type g6.xlarge --iam-instance-profile Name=GpuPoorGolfEC2 --security-group-ids "$sg" \
                 --instance-initiated-shutdown-behavior terminate --user-data "file://$ud" \
+                --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=150,VolumeType=gp3,DeleteOnTermination=true}' \
                 --metadata-options HttpTokens=required,HttpPutResponseHopLimit=1 \
                 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$JOB},{Key=golf,Value=scoring}]" \
                                      "ResourceType=volume,Tags=[{Key=Name,Value=$JOB},{Key=golf,Value=scoring}]" \
