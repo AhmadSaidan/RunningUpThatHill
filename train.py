@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from model import GPT, GPTConfig, save_model
+from model import GPT, GPTConfig, build_ngram_tables, save_model
 from tokenizer import load_tokenizer
 
 # ---- config (override any of these from the command line with key=value) ----
@@ -35,7 +35,12 @@ os.makedirs(out_dir, exist_ok=True)
 
 tok = load_tokenizer(out_dir)
 with open("data/train.txt", "rb") as f:
-    data = tok.encode(f.read())
+    full_data = tok.encode(f.read())
+# Disjoint split: index second half so training hints are IID with held-out validation text.
+split = len(full_data) // 2
+data = full_data[:split]
+tables = build_ngram_tables(full_data[split:])
+del full_data
 
 
 def get_batch():
@@ -47,6 +52,8 @@ def get_batch():
 
 
 model = GPT(GPTConfig(tok.vocab_size, block_size, n_layer, n_head, n_embd)).to(device)
+model.load_ngram_tables(tables)
+del tables
 print(f"{sum(p.numel() for p in model.parameters()):,} parameters on {device}")
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
