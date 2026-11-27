@@ -100,12 +100,13 @@ def get_batch():
     return torch.from_numpy(x).to(device), torch.from_numpy(y).to(device)
 
 
-model = GPT(GPTConfig(tok.vocab_size, block_size, n_layer, n_head, n_embd)).to(device)
-model.load_ngram_tables(tables)
+raw_model = GPT(GPTConfig(tok.vocab_size, block_size, n_layer, n_head, n_embd)).to(device)
+raw_model.load_ngram_tables(tables)
 del tables
-print(f"{sum(p.numel() for p in model.parameters()):,} parameters on {device}")
-muon_params = [p for n, p in model.named_parameters() if n.startswith("blocks.") and p.ndim == 2]
-adam_params = [p for n, p in model.named_parameters() if not (n.startswith("blocks.") and p.ndim == 2)]
+print(f"{sum(p.numel() for p in raw_model.parameters()):,} parameters on {device}")
+muon_params = [p for n, p in raw_model.named_parameters() if n.startswith("blocks.") and p.ndim == 2]
+adam_params = [p for n, p in raw_model.named_parameters() if not (n.startswith("blocks.") and p.ndim == 2)]
+model = torch.compile(raw_model) if device == "cuda" else raw_model
 optimizers = [
     Muon(muon_params, lr=muon_lr),
     torch.optim.AdamW(adam_params, lr=learning_rate),
@@ -129,4 +130,4 @@ while time.time() - t0 < time_budget:
         print(f"step {step} | loss {loss.item():.4f} | {elapsed:.0f}s | {step * batch_size * block_size / elapsed:,.0f} tok/s")
 
 print(f"done: {step} steps, {step * batch_size * block_size:,} tokens in {time.time() - t0:.0f}s")
-save_model(model, out_dir)
+save_model(raw_model, out_dir)
